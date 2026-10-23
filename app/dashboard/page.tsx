@@ -71,13 +71,12 @@ export default function Dashboard() {
       const data = await res.json();
       if (res.ok && data.licenseKey) {
         setGeneratedKey(data.licenseKey);
-        // Refresh list
         fetchLicenses();
       } else {
-        setErrorMsg(data.message || 'حدث خطأ أثناء توليد المفتاح');
+        setErrorMsg(data.message || 'Error generating license key');
       }
     } catch (err) {
-      setErrorMsg('تعذر الاتصال بالسيرفر السحابي');
+      setErrorMsg('Failed to connect to cloud server');
     } finally {
       setLoading(false);
     }
@@ -85,13 +84,13 @@ export default function Dashboard() {
 
   const fetchLicenses = async () => {
     try {
-      const res = await fetch('/api/verify-license/list'); // API لعرض القائمة إذا جرى إعداده
+      const res = await fetch('/api/verify-license/list');
       if (res.ok) {
         const data = await res.json();
         setLicenses(data.licenses || []);
       }
     } catch (e) {
-      console.log('List fetch not active yet');
+      console.log('List fetch endpoint not active yet');
     }
   };
 
@@ -102,18 +101,18 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dir-rtl p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-slate-50 dir-ltr p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">نظام إدارة التراخيص والمالية</h1>
-            <p className="text-slate-500 text-sm mt-1">إدارة اشتراكات العيادات والتراخيص السحابية والدفعات</p>
+            <h1 className="text-2xl font-bold text-slate-800">License & Financial Management System</h1>
+            <p className="text-slate-500 text-sm mt-1">Manage clinic subscriptions, cloud licenses, and payments</p>
           </div>
           <span className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-200 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            السيرفر السحابي متصل
+            Cloud Server Connected
           </span>
         </div>
 
@@ -121,7 +120,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 font-medium">إجمالي الإيرادات</p>
+              <p className="text-xs text-slate-500 font-medium">Total Revenue</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">${totalRevenue}</h3>
             </div>
             <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
@@ -131,7 +130,7 @@ export default function Dashboard() {
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 font-medium">التراخيص النشطة</p>
+              <p className="text-xs text-slate-500 font-medium">Active Licenses</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">{activeLicenses}</h3>
             </div>
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
@@ -141,7 +140,7 @@ export default function Dashboard() {
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 font-medium">دفعات معلقة</p>
+              <p className="text-xs text-slate-500 font-medium">Pending Payments</p>
               <h3 className="text-2xl font-bold text-amber-600 mt-1">{pendingPayments}</h3>
             </div>
             <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
@@ -151,7 +150,7 @@ export default function Dashboard() {
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 font-medium">إجمالي الأجهزة المربوطة</p>
+              <p className="text-xs text-slate-500 font-medium">Total Devices Allowed</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">
                 {licenses.reduce((acc, curr) => acc + (curr.max_devices || 1), 0)}
               </h3>
@@ -166,16 +165,16 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
             <PlusCircle className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-bold text-slate-800">توليد ترخيص جديد وتسجيل الدفعة</h2>
+            <h2 className="text-lg font-bold text-slate-800">Generate New License & Record Payment</h2>
           </div>
 
           <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">اسم العيادة</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Clinic Name</label>
               <input
                 type="text"
                 required
-                placeholder="مثال: عيادة الأمل لطب الأسنان"
+                placeholder="e.g. Al-Amal Dental Clinic"
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 value={formData.clinicName}
                 onChange={e => setFormData({ ...formData, clinicName: e.target.value })}
@@ -183,7 +182,7 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">البريد الإلكتروني</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Email Address</label>
               <input
                 type="email"
                 required
@@ -195,7 +194,7 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">رقم العميل / الهاتف</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Customer Phone / ID</label>
               <input
                 type="text"
                 placeholder="+252 61 XXX XXXX"
@@ -206,20 +205,20 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">خطة الاشتراك</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Subscription Plan</label>
               <select
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 value={formData.planCode}
                 onChange={e => setFormData({ ...formData, planCode: e.target.value })}
               >
-                <option value="Monthly">شهري (Monthly)</option>
-                <option value="Annual">سنوي (Annual)</option>
-                <option value="Lifetime">دائم (Lifetime)</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Annual">Annual (1 Year)</option>
+                <option value="Lifetime">Lifetime</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">مبلغ الاشتراك ($)</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Amount ($)</label>
               <input
                 type="number"
                 required
@@ -230,15 +229,15 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">حالة الدفع</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Payment Status</label>
               <select
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 value={formData.paymentStatus}
                 onChange={e => setFormData({ ...formData, paymentStatus: e.target.value as any })}
               >
-                <option value="paid">تم الدفع (Paid) 🟢</option>
-                <option value="pending">معلق (Pending) 🟡</option>
-                <option value="trial">تجريبي (Trial) 🔵</option>
+                <option value="paid">Paid 🟢</option>
+                <option value="pending">Pending 🟡</option>
+                <option value="trial">Trial 🔵</option>
               </select>
             </div>
 
@@ -248,7 +247,7 @@ export default function Dashboard() {
                 disabled={loading}
                 className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl transition-all shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'جاري إنشاء المفتاح...' : 'توليد المفتاح وحفظ الاشتراك'}
+                {loading ? 'Generating Key...' : 'Generate License & Save Record'}
               </button>
             </div>
           </form>
@@ -257,14 +256,14 @@ export default function Dashboard() {
           {generatedKey && (
             <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
               <div>
-                <p className="text-xs text-emerald-700 font-semibold">تم إنشاء المفتاح بنجاح:</p>
+                <p className="text-xs text-emerald-700 font-semibold">License Key Generated Successfully:</p>
                 <p className="text-lg font-mono font-bold text-emerald-900 mt-0.5">{generatedKey}</p>
               </div>
               <button
                 onClick={() => navigator.clipboard.writeText(generatedKey)}
                 className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition"
               >
-                نسخ المفتاح
+                Copy Key
               </button>
             </div>
           )}
@@ -279,15 +278,15 @@ export default function Dashboard() {
         {/* License & Subscriptions List Table */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h2 className="text-lg font-bold text-slate-800">قائمة التراخيص والاشتراكات المسجلة</h2>
+            <h2 className="text-lg font-bold text-slate-800">Registered Licenses & Subscriptions</h2>
             
             {/* Search Input */}
             <div className="relative w-full md:w-72">
-              <Search className="w-4 h-4 absolute right-3.5 top-3 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
               <input
                 type="text"
-                placeholder="بحث بالاسم، المفتاح، أو الهاتف..."
-                className="w-full pr-10 pl-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder="Search by clinic, key, or phone..."
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -295,23 +294,23 @@ export default function Dashboard() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
+            <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                 <tr>
-                  <th className="p-3">العيادة / البريد</th>
-                  <th className="p-3">رقم العميل</th>
-                  <th className="p-3">مفتاح الترخيص</th>
-                  <th className="p-3">الخطة</th>
-                  <th className="p-3">المبلغ</th>
-                  <th className="p-3">حالة الدفع</th>
-                  <th className="p-3">حالة الترخيص</th>
+                  <th className="p-3">Clinic / Email</th>
+                  <th className="p-3">Customer Phone</th>
+                  <th className="p-3">License Key</th>
+                  <th className="p-3">Plan</th>
+                  <th className="p-3">Amount</th>
+                  <th className="p-3">Payment</th>
+                  <th className="p-3">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredLicenses.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-6 text-center text-slate-400">
-                      لا توجد تراخيص مسجلة حالياً
+                      No licenses found
                     </td>
                   </tr>
                 ) : (
@@ -330,14 +329,14 @@ export default function Dashboard() {
                           lic.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-700' :
                           lic.payment_status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
                         }`}>
-                          {lic.payment_status === 'paid' ? 'مدفوع' : lic.payment_status === 'pending' ? 'معلق' : 'تجريبي'}
+                          {lic.payment_status === 'paid' ? 'Paid' : lic.payment_status === 'pending' ? 'Pending' : 'Trial'}
                         </span>
                       </td>
                       <td className="p-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           lic.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
                         }`}>
-                          {lic.status === 'active' ? 'نشط 🟢' : 'منتهي 🔴'}
+                          {lic.status === 'active' ? 'Active 🟢' : 'Expired 🔴'}
                         </span>
                       </td>
                     </tr>
