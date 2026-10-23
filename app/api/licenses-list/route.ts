@@ -10,7 +10,7 @@ export async function GET() {
       success: true,
       licenses: result.rows,
     });
-  } catch (error: any)يف {
+  } catch (error: any) {
     console.error('Error fetching licenses list:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error', error: error.message },
