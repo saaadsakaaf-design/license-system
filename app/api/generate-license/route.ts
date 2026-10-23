@@ -1,75 +1,76 @@
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { Pool } from '@neondatabase/serverless';
 import crypto from 'crypto';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 export async function POST(request: Request) {
   try {
-    const { clinic_name, email, plan_code, max_devices } = await request.json();
+    const body = await request.json();
+    const { clinicName, email, customerPhone, planCode, maxDevices, amount, paymentStatus } = body;
 
-    if (!clinic_name || !email || !plan_code) {
+    if (!clinicName || !email) {
       return NextResponse.json(
-        { success: false, message: 'Missing required fields' },
+        { success: false, message: 'Clinic name and email are required' },
         { status: 400 }
       );
     }
 
-    // Generate a secure random raw license key
-    const rawKey = `LIC-${crypto.randomBytes(4).toString('hex').toUpperCase()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-
-    // Hash the license key for secure storage
-    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    // Generate a secure unique license key
+    const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
+    const licenseKey = `LIC-${randomHex}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
     // Calculate expiration date based on plan
     const expiresAt = new Date();
-    if (plan_code === 'demo') {
-      expiresAt.setDate(expiresAt.getDate() + 30); // 30 days trial
+    if (planCode === 'Monthly') {
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
+    } else if (planCode === 'Annual') {
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     } else {
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1); // 1 year annual
+      expiresAt.setFullYear(expiresAt.getFullYear() + 100); // Lifetime
     }
 
-    const client = await pool.connect();
+    const query = `
+      INSERT INTO licenses (
+        license_key, 
+        clinic_name, 
+        email, 
+        customer_phone, 
+        plan_code, 
+        max_devices, 
+        amount, 
+        payment_status, 
+        status, 
+        expires_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)
+      RETURNING *;
+    `;
 
-    try {
-      const query = `
-        INSERT INTO public.licenses (clinic_name, email, license_key_hash, plan_code, max_devices, expires_at, status)
-        VALUES ($1, $2, $3, $4, $5, $6, 'active')
-        RETURNING id, created_at;
-      `;
+    const values = [
+      licenseKey,
+      clinicName,
+      email,
+      customerPhone || null,
+      planCode || 'Annual',
+      maxDevices || 1,
+      amount || 0,
+      paymentStatus || 'paid',
+      expiresAt.toISOString(),
+    ];
 
-      const values = [
-        clinic_name,
-        email,
-        keyHash,
-        plan_code,
-        max_devices || 2,
-        expiresAt,
-      ];
+    const result = await pool.query(query, values);
 
-      const result = await client.query(query, values);
-
-      return NextResponse.json({
-        success: true,
-        message: 'License generated successfully',
-        license_key: rawKey, // Return the raw key ONLY once to the admin
-        license_id: result.rows[0].id,
-        expires_at: expiresAt,
-      });
-
-    } finally {
-      client.release();
-    }
-
-  } catch (error) {
+    return NextResponse.json({
+      success: true,
+      message: 'License generated and saved successfully',
+      licenseKey: licenseKey,
+      data: result.rows[0],
+    });
+  } catch (error: any) {
     console.error('Error generating license:', error);
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Internal server error', error: error.message },
       { status: 500 }
     );
   }
